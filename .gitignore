@@ -132,3 +132,5 @@ dmypy.json
 raw_data/
 voc_datasets/
 labelme_annotations/
+processed_data
+trained_models/
