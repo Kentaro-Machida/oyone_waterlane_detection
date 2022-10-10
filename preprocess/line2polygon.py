@@ -2,9 +2,7 @@ import json
 import copy
 import os
 import glob
-
-OUT_DIR = "./line2polygon"  # 出力したいディレクトリ
-TARGET_DIR = './second_test'  # 変換したいjsonファイルがあるディレクトリ
+import argparse
 
 def line2polygon(line_json_path, include_front:bool)->dict:
     """
@@ -93,8 +91,13 @@ def save_json(save_dict, file_path:str):
         json.dump(save_dict, f)
 
 if __name__=='__main__':
-    os.mkdir(OUT_DIR)
-    target_list = get_target_list(TARGET_DIR)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input_dir',
+    help='変換したいjsonファイルがあるディレクトリ')
+    parser.add_argument('--output_dir', help=' 出力したいディレクトリ')
+    args = parser.parse_args()
+    os.mkdir(args.output_dir)
+    target_list = get_target_list(args.input_dir)
 
     # 対象のjsonパスへの処理
     count = 0
@@ -104,7 +107,7 @@ if __name__=='__main__':
         if base_name.find("converted") == -1:
             count += 1
             out_name = "converted_" + base_name
-            out_path = str(os.path.join(OUT_DIR, out_name))
+            out_path = str(os.path.join(args.output_dir, out_name))
             polygon_dict = line2polygon(target_path, include_front=True)
             save_json(polygon_dict, out_path)
-    print(f"{count} files are converted to {OUT_DIR}")
+    print(f"{count} files are converted to {args.output_dir}")
