@@ -28,6 +28,9 @@ labelmeでのアノテーションをVOCデータセットに変換できる。�
 python ./labelme2voc/labelme2voc.py ../processed_data/polygons/113_datas_polygon ../processed_data/voc_datasets/113_dataset_voc --labels ./labelme2voc/labels.txt
 ~~~
 
+* sapling.ipynb  
+フレームレートが高すぎると、アノテーションの手間の割に似たデータばかりになってしまう。それを防ぐためにサンプリングを行うためのコード
+
 ### samples
 * line_strip_annotation  
 labelme を使用してline_stripとしてアノテーションし、出力されたjsonファイルがあるフォルダ。jsonファイル内には、アノテーションの情報と画像そのもののデータが含まれているため、ここから画像を復元可能。
