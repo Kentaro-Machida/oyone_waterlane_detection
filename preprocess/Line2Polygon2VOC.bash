@@ -1,2 +1,2 @@
-python line2polygon.py --input_dir ../processed_data/labelme_annotations/400_datas --output_dir ../processed_data/polygons/400_datas_polygon
-python ./labelme2voc/labelme2voc.py ../processed_data/polygons/400_datas_polygon ../processed_data/voc_datasets/400_dataset_voc --labels ./labelme2voc/labels.txt
+python line2polygon.py --input_dir ../processed_data/labelme_annotations/test_datas --output_dir ../processed_data/polygons/test_datas_polygon
+python ./labelme2voc/labelme2voc.py ../processed_data/polygons/test_datas_polygon ../processed_data/voc_datasets/test_dataset_voc --labels ./labelme2voc/labels.txt
