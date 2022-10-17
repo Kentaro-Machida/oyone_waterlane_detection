@@ -11,7 +11,7 @@ import numpy as np
 
 HEIGHT = 320
 WIDTH = 480
-MP4_PATH = '../raw_data/9_6/2022_9_3_16_54/output.mp4'
+MP4_PATH = '../raw_data/9_6/2022_9_3_16_54/trimed.mp4'
 STATE_DICT_PATH = '../trained_models/400_dataset/Unet-Mobilenet_v2_mIoU-0.939.pt'
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -74,20 +74,35 @@ model.load_state_dict(torch.load(STATE_DICT_PATH))
 cap = cv2.VideoCapture(MP4_PATH)
 while True:
     ret, frame = cap.read()
-    print(frame.shape)
     frame = cv2.resize(frame, (WIDTH, HEIGHT))
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    print(frame.shape)
+
+    # 水路マスクの生成
+    start = time.time()  # 計算時間
+
     pred_mask = predict_image_mask(model, frame)
+
+    end = time.time()
+    fps = np.round(1/(end - start), 1)
+
     pred_mask = pred_mask.unsqueeze(0)
     pred_mask = pred_mask.numpy()
-    print(pred_mask.shape)
     zero_array = np.zeros(shape=(2, HEIGHT, WIDTH))
-    pred_mask = np.concatenate((zero_array, pred_mask), axis=0)
-    pred_mask = pred_mask.transpose(1, 2, 0)
+    pred_mask = np.concatenate((pred_mask, zero_array), axis=0)
+    pred_mask = pred_mask.transpose(1, 2, 0).astype(np.uint8)*255
+
+    # 表示用の画像生成
+    blend = (pred_mask * 0.2 + frame*0.8).astype(np.uint8)
+    blend = cv2.cvtColor(blend, cv2.COLOR_RGB2BGR)
+    cv2.putText(blend,"fps: " + str(fps),
+    (20, 20),
+    fontFace=cv2.FONT_HERSHEY_PLAIN,
+    color=(255, 0, 0),
+    fontScale=1.0,
+    thickness=2
+    )
     
-    cv2.imshow("test" ,pred_mask)
-    cv2.imshow("test2", frame)
+    cv2.imshow("OyoNet output" ,blend)
     key = cv2.waitKey(1)
     if key == 27:
         sys.exit(0)
