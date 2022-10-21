@@ -134,3 +134,4 @@ voc_datasets/
 labelme_annotations/
 processed_data
 trained_models/
+preprocess/annotation_progress.xlsx
