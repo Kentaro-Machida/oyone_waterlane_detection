@@ -1,13 +1,11 @@
 import cv2
 import sys
 import torch
-import torch.nn as nn
 from torchvision import transforms as T
 import time
-import os 
 import segmentation_models_pytorch as smp  # Segmentationのモデル
-import albumentations as A  # Data Augmentation
 import numpy as np
+import argparse
 
 HEIGHT = 320
 WIDTH = 480
@@ -61,7 +59,16 @@ def predict_image_mask(model, image, mean=[0.485, 0.456, 0.406], std=[0.229, 0.2
         masked = masked.cpu().squeeze(0)
     return masked
 
-model = smp.Unet(
+if __name__=='__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--mp4_path',help='入力したいmp4動画のパス')
+    parser.add_argument('-save' ,'--save_path',help='保存したいmp4動画のパス。指定なしなら保存なし')
+    parser.add_argument('--state_dict', help='学習済みモデルへのパス')
+    parser.add_argument('--width', help='リサイズ横幅', default=480)
+    parser.add_argument('--height', help='リサイズ縦幅', default=320)
+    args = parser.parse_args()
+
+    model = smp.Unet(
     'mobilenet_v2',
     encoder_weights='imagenet',
     classes=2, 
@@ -69,40 +76,51 @@ model = smp.Unet(
     encoder_depth=5, 
     decoder_channels=[256, 128, 64, 32, 16]
     )
-model.load_state_dict(torch.load(STATE_DICT_PATH))
+    model.load_state_dict(torch.load(args.state_dict))
 
-cap = cv2.VideoCapture(MP4_PATH)
-while True:
-    ret, frame = cap.read()
-    frame = cv2.resize(frame, (WIDTH, HEIGHT))
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    cap = cv2.VideoCapture(args.mp4_path)
+    if type(args.save_path)==str:
+        # コマンドラインで出力パスが指定されていれば, writter準備
+        fmt = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        writer = cv2.VideoWriter(args.save_path, fmt, 6, (args.width, args.height))
+    while True:
+        ret, frame = cap.read()
+        frame = cv2.resize(frame, (args.width, args.height))
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # 水路マスクの生成
-    start = time.time()  # 計算時間
+        # 水路マスクの生成
+        start = time.time()  # 計算時間
 
-    pred_mask = predict_image_mask(model, frame)
+        pred_mask = predict_image_mask(model, frame)
 
-    end = time.time()
-    fps = np.round(1/(end - start), 1)
+        end = time.time()
+        fps = np.round(1/(end - start), 1)
 
-    pred_mask = pred_mask.unsqueeze(0)
-    pred_mask = pred_mask.numpy()
-    zero_array = np.zeros(shape=(2, HEIGHT, WIDTH))
-    pred_mask = np.concatenate((pred_mask, zero_array), axis=0)
-    pred_mask = pred_mask.transpose(1, 2, 0).astype(np.uint8)*255
+        pred_mask = pred_mask.unsqueeze(0)
+        pred_mask = pred_mask.numpy()
+        zero_array = np.zeros(shape=(2, args.height, args.width))
+        pred_mask = np.concatenate((pred_mask, zero_array), axis=0)
+        pred_mask = pred_mask.transpose(1, 2, 0).astype(np.uint8)*255
 
-    # 表示用の画像生成
-    blend = (pred_mask * 0.2 + frame*0.8).astype(np.uint8)
-    blend = cv2.cvtColor(blend, cv2.COLOR_RGB2BGR)
-    cv2.putText(blend,"fps: " + str(fps),
-    (20, 20),
-    fontFace=cv2.FONT_HERSHEY_PLAIN,
-    color=(255, 0, 0),
-    fontScale=1.0,
-    thickness=2
-    )
-    
-    cv2.imshow("OyoNet output" ,blend)
-    key = cv2.waitKey(1)
-    if key == 27:
-        sys.exit(0)
+        # 表示用の画像生成
+        blend = (pred_mask * 0.2 + frame*0.8).astype(np.uint8)
+        blend = cv2.cvtColor(blend, cv2.COLOR_RGB2BGR)
+        cv2.putText(blend,"fps: " + str(fps),
+        (20, 20),
+        fontFace=cv2.FONT_HERSHEY_PLAIN,
+        color=(255, 0, 0),
+        fontScale=1.0,
+        thickness=2
+        )
+
+        if type(args.save_path)==str:
+            writer.write(blend)
+        
+        cv2.imshow("OyoNet output" ,blend)
+        key = cv2.waitKey(1)
+        if key == 27 or ret == False:
+            break
+
+    cap.release()
+    writer.release()
+    cv2.destroyAllWindows()
