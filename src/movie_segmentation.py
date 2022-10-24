@@ -98,6 +98,13 @@ if __name__=='__main__':
 
         pred_mask = pred_mask.unsqueeze(0)
         pred_mask = pred_mask.numpy()
+
+        # 船の行き先を決定
+        # ある一定の高さでで切断して台形を作成
+        # 台形の上底の中点を目的点とする
+        hist = np.sum(pred_mask[0, int(args.height/3):, :], axis=0)
+        dst_arrow = (int(np.mean(np.where(hist==hist.max()))), int(args.height/2))
+
         zero_array = np.zeros(shape=(2, args.height, args.width))
         pred_mask = np.concatenate((pred_mask, zero_array), axis=0)
         pred_mask = pred_mask.transpose(1, 2, 0).astype(np.uint8)*255
@@ -111,6 +118,12 @@ if __name__=='__main__':
         color=(255, 0, 0),
         fontScale=1.0,
         thickness=2
+        )
+
+        # 進行方向の描画
+        cv2.arrowedLine(
+            blend, pt1=(int(args.width/2), args.height), pt2=dst_arrow,
+            color=(0, 0, 255), thickness=3
         )
 
         if type(args.save_path)==str:
