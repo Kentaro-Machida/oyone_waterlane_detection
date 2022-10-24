@@ -108,6 +108,9 @@ if __name__=='__main__':
             count += 1
             out_name = "converted_" + base_name
             out_path = str(os.path.join(args.output_dir, out_name))
-            polygon_dict = line2polygon(target_path, include_front=True)
-            save_json(polygon_dict, out_path)
-    print(f"{count} files are converted to {args.output_dir}")
+            try:
+                polygon_dict = line2polygon(target_path, include_front=True)
+                save_json(polygon_dict, out_path)
+            except:
+                print("{} wasn't able to convert.".format(base_name))
+    print(f"-------{count} files are converted to {args.output_dir}--------")
