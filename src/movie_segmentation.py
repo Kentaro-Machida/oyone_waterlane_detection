@@ -64,17 +64,28 @@ if __name__=='__main__':
     parser.add_argument('--mp4_path',help='入力したいmp4動画のパス')
     parser.add_argument('-save' ,'--save_path',help='保存したいmp4動画のパス。指定なしなら保存なし')
     parser.add_argument('--state_dict', help='学習済みモデルへのパス')
-    parser.add_argument('--width', help='リサイズ横幅', default=480)
-    parser.add_argument('--height', help='リサイズ縦幅', default=320)
+    parser.add_argument('--width', help='リサイズ横幅', default=480, type=int)
+    parser.add_argument('--height', help='リサイズ縦幅', default=320, type=int)
+    parser.add_argument('--model_size', help='mini, normal', default='normal')
     args = parser.parse_args()
+    
+    if args.model_size == 'normal':
+        depth = 5
+        channels = [256, 128, 64, 32, 16]
+    elif args.model_size == 'mini':
+        depth = 3
+        channels = [64, 32, 16]
+    else:
+        print('{} mode is not exist. '.format(args.model_size))
+        sys.exit(0)
 
     model = smp.Unet(
     'mobilenet_v2',
     encoder_weights='imagenet',
     classes=2, 
     activation=None,
-    encoder_depth=5, 
-    decoder_channels=[256, 128, 64, 32, 16]
+    encoder_depth=depth, 
+    decoder_channels=channels
     )
     model.load_state_dict(torch.load(args.state_dict))
 
@@ -102,8 +113,11 @@ if __name__=='__main__':
         # 船の行き先を決定
         # ある一定の高さでで切断して台形を作成
         # 台形の上底の中点を目的点とする
-        hist = np.sum(pred_mask[0, int(args.height/3):, :], axis=0)
-        dst_arrow = (int(np.mean(np.where(hist==hist.max()))), int(args.height/2))
+        CUT_RATE = 0.6
+        hist_t = np.sum(pred_mask[0, :, :], axis=1)
+        cut_index = int(args.height - (args.height - np.argmin(hist_t))*CUT_RATE)
+        hist = np.sum(pred_mask[0, cut_index:, :], axis=0)
+        dst_arrow = (int(np.median(np.where(hist==hist.max()))), cut_index)
 
         zero_array = np.zeros(shape=(2, args.height, args.width))
         pred_mask = np.concatenate((pred_mask, zero_array), axis=0)
