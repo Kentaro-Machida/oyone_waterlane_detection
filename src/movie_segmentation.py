@@ -1,3 +1,4 @@
+from ast import parse
 import cv2
 import sys
 import torch
@@ -61,14 +62,16 @@ def predict_image_mask(model, image, mean=[0.485, 0.456, 0.406], std=[0.229, 0.2
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mp4_path',help='入力したいmp4動画のパス')
+    parser.add_argument('-mp','--mp4_path',help='入力したいmp4動画のパス')
     parser.add_argument('-save' ,'--save_path',help='保存したいmp4動画のパス。指定なしなら保存なし')
-    parser.add_argument('--state_dict', help='学習済みモデルへのパス')
-    parser.add_argument('--width', help='リサイズ横幅', default=480, type=int)
-    parser.add_argument('--height', help='リサイズ縦幅', default=320, type=int)
-    parser.add_argument('--model_size', help='mini, normal', default='normal')
+    parser.add_argument('-sd','--state_dict', help='学習済みモデルへのパス')
+    parser.add_argument('-w','--width', help='リサイズ横幅', default=480, type=int)
+    parser.add_argument('-h','--height', help='リサイズ縦幅', default=320, type=int)
+    parser.add_argument('-ms','--model_size', help='mini, normal', default='normal')
+    parser.add_argument('-c','--cut_rate', help='ガイドラインを作成する際にどのくらいで領域を切るか', default=0.6, type=float)
+    parser.add_argument('-q','--quantization', help='推論の際に量子化を行う', action='store_const', const=True)
     args = parser.parse_args()
-    
+
     if args.model_size == 'normal':
         depth = 5
         channels = [256, 128, 64, 32, 16]
@@ -88,6 +91,11 @@ if __name__=='__main__':
     decoder_channels=channels
     )
     model.load_state_dict(torch.load(args.state_dict))
+    if args.quantization:
+        print('Model is done quantization.')
+        model = torch.quantization.quantize_dynamic(
+            model, {torch.nn.Linear, torch.nn.Conv2d}, dtype=torch.qint8
+        )
 
     cap = cv2.VideoCapture(args.mp4_path)
     if type(args.save_path)==str:
@@ -113,9 +121,8 @@ if __name__=='__main__':
         # 船の行き先を決定
         # ある一定の高さでで切断して台形を作成
         # 台形の上底の中点を目的点とする
-        CUT_RATE = 0.6
         hist_t = np.sum(pred_mask[0, :, :], axis=1)
-        cut_index = int(args.height - (args.height - np.argmin(hist_t))*CUT_RATE)
+        cut_index = int(args.height - (args.height - np.argmin(hist_t))*args.cut_rate)
         hist = np.sum(pred_mask[0, cut_index:, :], axis=0)
         dst_arrow = (int(np.median(np.where(hist==hist.max()))), cut_index)
 
