@@ -4,5 +4,7 @@ OUT_PATH="../samples/output_movie/mini_segmented.mp4"
 MODEL_SIZE="mini"
 WIDTH=224
 HEIGHT=224
+CUT_RATE=0.4
 python movie_segmentation.py --mp4_path=$MP4_PATH --state_dict=$MINI_STATE_DICT_PATH \
---model_size=$MODEL_SIZE --width=$WIDTH --height=$HEIGHT -save=$OUT_PATH
+--model_size=$MODEL_SIZE --width=$WIDTH --height=$HEIGHT --cut_rate=$CUT_RATE -save=$OUT_PATH \
+--quantization
