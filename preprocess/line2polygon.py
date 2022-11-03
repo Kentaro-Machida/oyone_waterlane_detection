@@ -34,8 +34,11 @@ def line2polygon(line_json_path, include_front:bool)->dict:
         left_slope = (left_first_point[1] - left_second_point[1]) \
             / (left_first_point[0] - left_second_point[0])
 
+        # 一番手前の点が二番目の点よりも右にある場合
+        if left_slope > 0:
+            left_added_point = [[(Y_MAX - left_first_point[1])/left_slope+ left_first_point[0], Y_MAX]]
         # 直線の延長が先に画像の左端に当たった場合
-        if (0 - left_first_point[0])*left_slope + left_first_point[1] < Y_MAX:
+        elif (0 - left_first_point[0])*left_slope + left_first_point[1] < Y_MAX:
             left_added_point = [[0, (0 - left_first_point[0])*left_slope + left_first_point[1]],
             [0, Y_MAX]]
         # 直線の延長が先に画像の下端に当たった場合
@@ -49,8 +52,11 @@ def line2polygon(line_json_path, include_front:bool)->dict:
         right_slope = (right_first_point[1] - right_second_point[1]) \
             / (right_first_point[0] - right_second_point[0])
 
+        # 一番手前の点が二番目の点よりも左にある場合
+        if right_slope < 0:
+            right_added_point = [[(Y_MAX - right_first_point[1])/right_slope + right_first_point[0], Y_MAX]]
         # 直線の延長が先に画像の右端に当たった場合
-        if (X_MAX - right_first_point[0])*right_slope + right_first_point[1] < Y_MAX:
+        elif (X_MAX - right_first_point[0])*right_slope + right_first_point[1] < Y_MAX:
             right_added_point = [[X_MAX, (X_MAX - right_first_point[0])*right_slope + right_first_point[1]],
             [X_MAX, Y_MAX]]
         # 直線の延長が先に画像の下端に当たった場合
@@ -68,7 +74,7 @@ def line2polygon(line_json_path, include_front:bool)->dict:
     left_dict["points"].extend(right_dict["points"])  # ラインの座標を連結
 
     # 左ラインだった場所をpolygon情報に上書き
-    copy_dict['shapes'][0]['label'] = "road"
+    copy_dict['shapes'][0]['label'] = "Lane"
     copy_dict['shapes'][0]['points'] = left_dict['points']
     copy_dict['shapes'][0]['shape_type'] = 'polygon'
 
