@@ -66,7 +66,7 @@ if __name__=='__main__':
     parser.add_argument('-save' ,'--save_path',help='保存したいmp4動画のパス。指定なしなら保存なし')
     parser.add_argument('-sd','--state_dict', help='学習済みモデルへのパス')
     parser.add_argument('-w','--width', help='リサイズ横幅', default=480, type=int)
-    parser.add_argument('-h','--height', help='リサイズ縦幅', default=320, type=int)
+    parser.add_argument('-he','--height', help='リサイズ縦幅', default=320, type=int)
     parser.add_argument('-ms','--model_size', help='mini, normal', default='normal')
     parser.add_argument('-c','--cut_rate', help='ガイドラインを作成する際にどのくらいで領域を切るか', default=0.6, type=float)
     parser.add_argument('-q','--quantization', help='推論の際に量子化を行う', action='store_const', const=True)

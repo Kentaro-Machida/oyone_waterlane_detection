@@ -138,3 +138,4 @@ preprocess/annotation_progress.xlsx
 preprocess/~$annotation_progress.xlsx
 samples/output_movie
 /records/*xlsx
+src/behavioral_test
